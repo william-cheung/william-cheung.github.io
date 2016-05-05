@@ -115,7 +115,7 @@ nav {
   font: 13px/20px $sans;
   color: $nav-text;
 
-  img.bob {
+  img.william {
     @include box(#fff);
     width: 192px;
     margin: -8px -8px 32px -8px;
@@ -658,7 +658,7 @@ article {
   nav {
     display: inherit;
 
-    img.bob {
+    img.william {
       display: block;
       margin: -8px auto 16px;
     }

@@ -15,21 +15,20 @@ redcarpet:
   extensions: ["smart"]
 
 # Custom variables:
-disqus: "journal-stuffwithstuff"
+disqus: "william-cheung-etw"
 
 category_names:
-  "ai": "AI"
+  "algorithms": "Algorthms"
   "blog": "This Blog"
-  "book": "The Book"
-  "c-sharp": "C#"
   "code": "Coding"
+  "c": "C"
   "cpp": "C++"
-  "f-sharp": "F#"
-  "game-dev": "Game Development"
-  "js": "JavaScript"
+  "python": "Python"
+  "go": "Go"
   "language": "Programming Languages"
   "oop": "OOP"
-  "oscon": "OSCON"
-  "procedural-generation": "Procedural Generation"
-  "roguelike": "Roguelikes"
-  "typescript": "TypeScript"
+  "linux": "Linux"
+  "android": "Android"
+  "os": "O/S"
+  "distributed-systems": "Distributed Systems"
+  "computer-networks": "Computer Networks"

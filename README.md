@@ -1,3 +1,3 @@
-This is the source content and the build scripts for my blog [journal.stuffwithstuff.com](http://journal.stuffwithstuff.com).
+This is originally a copy of [source repo](https://github.com/munificent/journal) for Bob Nystrom's blog site [journal.stuffwithstuff.com](http://journal.stuffwithstuff.com).
 
-All of the content here is Copyright 2008-2015 Robert Nystrom.
+I modified some origin source for my personal use.
