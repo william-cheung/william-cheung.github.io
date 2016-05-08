@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "offsetof & container_of"
+title: "offsetof 和 container_of"
 categories: c code 
 ---
 

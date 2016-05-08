@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Circular Singly Linked List"
+title: "有环单链表"
 categories: algorithms
 ---
 

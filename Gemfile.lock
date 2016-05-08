@@ -38,6 +38,7 @@ GEM
       sass (~> 3.2)
     jekyll-watch (1.2.1)
       listen (~> 2.7)
+    json_pure (1.8.3)
     kramdown (1.5.0)
     liquid (2.6.2)
     listen (2.8.5)
@@ -68,3 +69,7 @@ PLATFORMS
 
 DEPENDENCIES
   jekyll
+  json_pure
+
+BUNDLED WITH
+   1.12.2
