@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro|PT+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+
+    <!-- Tell mobile browsers we're optimized for them and they don't need to
+         crop the viewport. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="/rss.xml" />
+    <link rel="alternate" type="application/atom+xml" title="Atom 1.0" href="/atom.xml" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <title>
+      Prototype 模式
+      
+        &ndash; william-cheung.github.io
+      
+    </title>
+  </head>
+  <body>
+    <div class="column">
+      
+<article>
+<header>
+<h1>
+  <a href="/2015/08/28/prototype-design-pattern" rel="bookmark"
+     title="Permanent Link to Prototype 模式">
+    Prototype 模式
+  </a>
+</h1>
+
+  <a class="older" href="/2015/08/19/offsetof-and-container_of"
+     title="Older Post &ldquo;offsetof 和 container_of&rdquo;">&#8617;</a>
+
+
+  <a class="newer" href="/2015/09/23/on-initialization-of-static-local-variables-in-cpp"
+     title="Newer Post &ldquo;关于 C++ 中局部静态变量初始化&rdquo;">&#8618;</a>
+
+</header>
+<h4><a href="/archive">August 28, 2015</a>
+    <span class="tags"><a href="/category/cpp">cpp</a> <a href="/category/oop">oop</a></span>
+</h4>
+
+<p>在某公司使用的框架源代码里看到了 Prototype 模式， 这里把代码提炼总结一下：</p>
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** Abstract.h **/</span>
+
+<span class="k">class</span> <span class="nc">Abstract</span> <span class="p">{</span> <span class="c1">// prototype manager</span>
+<span class="k">private</span><span class="o">:</span>
+    <span class="k">typedef</span> <span class="n">map</span><span class="o">&lt;</span><span class="kt">type_t</span><span class="p">,</span> <span class="n">Abstract</span><span class="o">*&gt;</span> <span class="n">RegMap</span><span class="p">;</span>
+    <span class="k">static</span> <span class="n">RegMap</span><span class="o">&amp;</span> <span class="n">getRegistry</span><span class="p">()</span> <span class="p">{</span> 
+        <span class="k">static</span> <span class="n">RegMap</span> <span class="n">registry</span><span class="p">;</span> <span class="c1">// a static-local  </span>
+        <span class="k">return</span> <span class="n">registry</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">Abstract</span><span class="p">(</span><span class="k">const</span> <span class="kt">type_t</span><span class="o">&amp;</span> <span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">lookup</span><span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+            <span class="n">getRegistry</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">virtual</span> <span class="o">~</span><span class="n">Abstract</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">virtual</span> <span class="n">Abstract</span><span class="o">*</span> <span class="n">clone</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  
+
+    <span class="k">static</span> <span class="n">Abstract</span><span class="o">*</span> <span class="nf">create</span><span class="p">(</span><span class="k">const</span> <span class="kt">type_t</span><span class="o">&amp;</span> <span class="n">type</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="n">Abstract</span><span class="o">*</span> <span class="n">stub</span> <span class="o">=</span> <span class="n">lookup</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">stub</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">:</span> <span class="n">stub</span><span class="o">-&gt;</span><span class="n">clone</span><span class="p">()</span> <span class="o">:</span> <span class="nb">NULL</span><span class="p">;</span> 
+    <span class="p">}</span>
+
+    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="p">()</span> <span class="p">{</span> <span class="k">delete</span> <span class="k">this</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">const</span> <span class="n">Abstract</span><span class="o">*</span> <span class="nf">lookup</span><span class="p">(</span><span class="k">const</span> <span class="kt">type_t</span><span class="o">&amp;</span> <span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">getRegistry</span><span class="p">().</span><span class="n">find</span><span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="o">!=</span> <span class="n">getRegistry</span><span class="p">().</span><span class="n">end</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">getRegistry</span><span class="p">()[</span><span class="n">type</span><span class="p">];</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** ConcreteA.h **/</span>
+
+<span class="k">class</span> <span class="nc">ConcreteA</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Abstract</span> <span class="p">{</span>
+    <span class="c1">// ... data members</span>
+    <span class="n">ConcreteA</span><span class="o">*</span> <span class="n">clone</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="k">new</span> <span class="n">ConcreteA</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">ConcreteA</span><span class="p">()</span> <span class="o">:</span> <span class="n">Abstract</span><span class="p">(</span><span class="n">CONC_TYPE_A</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span> <span class="c1">// CONC_TYPE_A : constant</span>
+    <span class="c1">// ... other members</span>
+<span class="p">};</span>
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** ConcreteA.cpp **/</span>
+
+    <span class="k">static</span> <span class="n">ConcreteA</span> <span class="n">__concrete_a_stub</span><span class="cm">/*(...)*/</span><span class="p">;</span> <span class="c1">// static initialized</span>
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** ConcreteB.h **/</span>
+
+<span class="k">class</span> <span class="nc">ConcreteB</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Abstract</span> <span class="p">{</span>
+    <span class="c1">// ... data members</span>
+    <span class="n">ConcreteB</span><span class="o">*</span> <span class="n">clone</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="k">new</span> <span class="n">ConcreteB</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">ConcreteB</span><span class="p">()</span> <span class="o">:</span> <span class="n">Abstract</span><span class="p">(</span><span class="n">CONC_TYPE_B</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span> <span class="c1">// CONC_TYPE_B : constant</span>
+    <span class="c1">// ... other members</span>
+<span class="p">};</span>
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** ConcreteB.cpp **/</span>
+
+    <span class="k">static</span> <span class="n">ConcreteB</span> <span class="n">__concrete_b_stub</span><span class="cm">/*(...)*/</span><span class="p">;</span> 
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+<span class="cm">/** Client **/</span>
+
+<span class="n">Abstract</span><span class="o">*</span> <span class="n">p_abstract</span> <span class="o">=</span> <span class="n">Abstract</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">CONC_TYPE_A</span> <span class="cm">/* or CONC_TYPE_B */</span><span class="p">);</span>
+<span class="c1">// ... some code</span>
+<span class="n">p_abstract</span><span class="o">-&gt;</span><span class="n">destroy</span><span class="p">();</span>
+
+<span class="c1">// ---------------------------------------------------------------------</span>
+</code></pre></div>
+<h3>使用 Prototype 模式的好处 :</h3>
+
+<ol>
+<li><p>对客户端隐藏具体的产品类 (product classes)，这样就能够减少客户端可见的类的数目，降低系统的复杂性；</p></li>
+<li><p>很容易添加或者类的原型；</p></li>
+<li><p>可以动态配置一个应用所能使用的类。在上面代码中，所有的原型是在 main 函数执行之前注册到 prototype manager 持有的注册表中的（静态初始化过程）。 实际上， 注册表项的加载可以推迟到 main 函数执行后， 即动态地加载到注册表中。</p></li>
+<li><p>简化了继承体系结构；利用下面摘自 GoF Design Patterns 的代码来说明这一点 </p></li>
+</ol>
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="k">class</span> <span class="nc">MazePrototypeFactory</span> <span class="o">:</span> <span class="k">public</span> <span class="n">MazeFactory</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span> 
+    <span class="n">MazePrototypeFactory</span><span class="p">(</span><span class="n">Maze</span><span class="o">*</span><span class="p">,</span> <span class="n">Wall</span><span class="o">*</span><span class="p">,</span> <span class="n">Room</span><span class="o">*</span><span class="p">,</span> <span class="n">Door</span><span class="o">*</span><span class="p">);</span>
+
+    <span class="k">virtual</span> <span class="n">Maze</span><span class="o">*</span> <span class="n">MakeMaze</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="n">Room</span><span class="o">*</span> <span class="n">MakeRoom</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="n">Wall</span><span class="o">*</span> <span class="n">MakeWall</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="n">Door</span><span class="o">*</span> <span class="n">MakeDoor</span><span class="p">(</span><span class="n">Room</span><span class="o">*</span><span class="p">,</span> <span class="n">Room</span><span class="o">*</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="n">Maze</span><span class="o">*</span> <span class="n">_prototypeMaze</span><span class="p">;</span>
+    <span class="n">Room</span><span class="o">*</span> <span class="n">_prototypeRoom</span><span class="p">;</span>
+    <span class="n">Wall</span><span class="o">*</span> <span class="n">_prototypeWall</span><span class="p">;</span>
+    <span class="n">Door</span><span class="o">*</span> <span class="n">_prototypeDoor</span><span class="p">;</span>
+<span class="p">};</span>
+
+
+<span class="n">MazePrototypeFactory</span><span class="o">::</span><span class="n">MazePrototypeFactory</span> <span class="p">(</span>
+    <span class="n">Maze</span><span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="n">Wall</span><span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="n">Room</span><span class="o">*</span> <span class="n">r</span><span class="p">,</span> <span class="n">Door</span><span class="o">*</span> <span class="n">d</span>
+<span class="p">)</span> <span class="p">{</span>
+    <span class="n">_prototypeMaze</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span>
+    <span class="n">_prototypeWall</span> <span class="o">=</span> <span class="n">w</span><span class="p">;</span>
+    <span class="n">_prototypeRoom</span> <span class="o">=</span> <span class="n">r</span><span class="p">;</span>
+    <span class="n">_prototypeDoor</span> <span class="o">=</span> <span class="n">d</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>MakeWall 和 MakeDoor 的定义:</p>
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">Wall</span><span class="o">*</span> <span class="n">MazePrototypeFactory</span><span class="o">::</span><span class="n">MakeWall</span> <span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">_prototypeWall</span><span class="o">-&gt;</span><span class="n">Clone</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">Door</span><span class="o">*</span> <span class="n">MazePrototypeFactory</span><span class="o">::</span><span class="n">MakeDoor</span> <span class="p">(</span><span class="n">Room</span><span class="o">*</span> <span class="n">r1</span><span class="p">,</span> <span class="n">Room</span> <span class="o">*</span><span class="n">r2</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="n">Door</span><span class="o">*</span> <span class="n">door</span> <span class="o">=</span> <span class="n">_prototypeDoor</span><span class="o">-&gt;</span><span class="n">Clone</span><span class="p">();</span>
+    <span class="n">door</span><span class="o">-&gt;</span><span class="n">Initialize</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">door</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>我们可以看到这两个方法只是获得原型的拷贝并返回</p>
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">MazeGame</span> <span class="n">game</span><span class="p">;</span>
+
+<span class="n">MazePrototypeFactory</span> <span class="nf">simpleMazeFactory</span><span class="p">(</span>
+    <span class="k">new</span> <span class="n">Maze</span><span class="p">,</span> <span class="k">new</span> <span class="n">Wall</span><span class="p">,</span> <span class="k">new</span> <span class="n">Room</span><span class="p">,</span> <span class="k">new</span> <span class="n">Door</span>
+<span class="p">);</span>
+
+<span class="n">Maze</span><span class="o">*</span> <span class="n">maze</span> <span class="o">=</span> <span class="n">game</span><span class="p">.</span><span class="n">CreateMaze</span><span class="p">(</span><span class="n">simpleMazeFactory</span><span class="p">);</span>
+</code></pre></div>
+<p>这里创建了一个默认的 MazeFactory。</p>
+
+<p>我们可以使用另一组原型来初始化 MazePrototypeFactory，以获得新的 Maze 类型。</p>
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">MazePrototypeFactory</span> <span class="nf">bombedMazeFactory</span><span class="p">(</span>
+    <span class="k">new</span> <span class="n">Maze</span><span class="p">,</span> <span class="k">new</span> <span class="n">BombedWall</span><span class="p">,</span>
+    <span class="k">new</span> <span class="n">RoomWithABomb</span><span class="p">,</span> <span class="k">new</span> <span class="n">Door</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>我们只需要 BombedWall 和 RoomWithABomb 分别继承 Wall 和 Room 并实现相应接口 (如 Clone() 等)。这样就不用继承 MazeFactory 就可以获得定制的 Maze， 以优雅的方式实现了所需要的功能。</p>
+
+  <div class="social">
+    <!--
+	<a href="//www.reddit.com/submit?url=http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern/" target="_blank">
+      <i class="fa fa-lg fa-reddit-square"></i>
+    </a>
+
+    <a href="//news.ycombinator.com/submitlink?u=http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern/&amp;t=Prototype 模式" target="_blank">
+      <i class="fa fa-lg fa-hacker-news"></i>
+    </a>
+
+    <a href="http://twitter.com/share?url=http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern&amp;text=%22Prototype 模式%22%20%40munificentbob" target="_blank">
+      <i class="fa fa-lg fa-twitter-square"></i>
+    </a>
+
+    <a href="http://www.facebook.com/share.php?u=http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern" target="_blank">
+      <i class="fa fa-lg fa-facebook-square"></i>
+    </a>
+
+    <a href="https://plus.google.com/share?url=http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern" target="_blank">
+      <i class="fa fa-lg fa-google-plus-square"></i>
+    </a>
+
+    <a href="/rss.xml">
+      <i class="fa fa-lg fa-rss-square"></i>
+    </a>
+	-->
+  </div>
+
+  
+  <div class="comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'william-cheung-etw';
+        /*var disqus_url = "http://journal.stuffwithstuff.com/2015/08/28/prototype-design-pattern";*/
+
+        (function() {
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+  
+</article>
+
+
+      <nav>
+  <div class="nav-first">
+    <a href="/"><img src="/image/dorm_shot.jpg" class="william"></a>
+
+    <p>Hi! I'm <strong>William Cheung</strong>, a code maker.</p> 
+	<p><a href="/cv.html">Here</a> is my resume.</p>
+    <p>You can email me at <code>escape.the.well@gmail.com</code></p>
+
+    <h2>Elsewhere</h2>
+    <ul>
+      <li>Code at <a href="http://github.com/william-cheung">github</a></li>
+      <li>Posts at <a href="http://www.cnblogs.com/william-cheung">cnblogs</a></li>
+    </ul>
+  </div>
+  <div class="nav-second">
+    <h2>Categories</h2>
+    <ul><li><a href="/category/algorithms">algorithms</a> <small class='post-count'>2</small></li><li><a href="/category/c">c</a> <small class='post-count'>2</small></li><li><a href="/category/code">code</a> <small class='post-count'>2</small></li><li><a href="/category/cpp">cpp</a> <small class='post-count'>2</small></li><li><a href="/category/oop">oop</a> <small class='post-count'>1</small></li></ul>
+
+    <p class="archive">All <a href="/archive">6 articles</a>&hellip;</p>
+
+    <p>This blog is built using <a href="http://jekyllrb.com/">jekyll</a>. The source repo for it is <a href="https://github.com/william-cheung/william-cheung.github.io">here</a>.</p>
+    <p class="copyright">&copy; 2016 William Cheung</p>
+  </div>
+</nav>
+
+    </div>
+  </body>
+</html>

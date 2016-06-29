@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro|PT+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+
+    <!-- Tell mobile browsers we're optimized for them and they don't need to
+         crop the viewport. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="/rss.xml" />
+    <link rel="alternate" type="application/atom+xml" title="Atom 1.0" href="/atom.xml" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <title>
+      Annonated IOCCC best one-liner winner program
+      
+        &ndash; william-cheung.github.io
+      
+    </title>
+  </head>
+  <body>
+    <div class="column">
+      
+<article>
+<header>
+<h1>
+  <a href="/2016/05/03/ioccc-best-one-liner-1987" rel="bookmark"
+     title="Permanent Link to Annonated IOCCC best one-liner winner program">
+    Annonated IOCCC best one-liner winner program
+  </a>
+</h1>
+
+  <a class="older" href="/2015/09/23/on-initialization-of-static-local-variables-in-cpp"
+     title="Older Post &ldquo;关于 C++ 中局部静态变量初始化&rdquo;">&#8617;</a>
+
+
+</header>
+<h4><a href="/archive">May 03, 2016</a>
+    <span class="tags"><a href="/category/c">c</a> <a href="/category/code">code</a></span>
+</h4>
+
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cm">/* ioccc.c */</span>
+
+<span class="cm">/* IOCCC best one-liner winner 1987 by David Korn ---</span>
+
+<span class="cm">main() { printf(&amp;unix[&quot;\021%six\012\0&quot;],(unix)[&quot;have&quot;]+&quot;fun&quot;-0x60);}</span>
+
+<span class="cm">from &lt;http://www.ioccc.org/years.html#1987&gt;</span>
+<span class="cm">*/</span>
+
+<span class="cm">/* A detailed set of samples to show how this works</span>
+<span class="cm">   by David Ireland, copyright (C) 2002.</span>
+
+<span class="cm">   Modified by William Cheung</span>
+<span class="cm">     for GCC Version 4.8.3 on CentOS 7 (x86_64)</span>
+<span class="cm">   See </span>
+<span class="cm">       http://www.di-mgt.com.au/src/korn_ioccc.txt</span>
+<span class="cm">     for original code</span>
+<span class="cm">*/</span>
+
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> 
+<span class="p">{</span>
+
+    <span class="c1">// int unix;</span>
+    <span class="c1">// We do not need to declare &#39;unix&#39;, or we will get an error:</span>
+    <span class="c1">//   expected identifier or ‘(’ before numeric constant</span>
+    <span class="c1">// because unix is a predefined macro that expands to 1 (only on </span>
+    <span class="c1">// unix-like systems perhaps) </span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;unix=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">unix</span><span class="p">);</span> <span class="cm">/* =1 */</span>    
+
+    <span class="cm">/* This prints the string &quot;un&quot;, </span>
+<span class="cm">       i.e. &quot;fun&quot; starting at offset [1] */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="s">&quot;fun&quot;</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+
+    <span class="cm">/* This prints 97 = the int value of the 2nd char &#39;a&#39; */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;have&quot;</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="cm">/* just like this */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="sc">&#39;a&#39;</span><span class="p">);</span>
+
+    <span class="cm">/* ditto because x[1] = 1[x] */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]);</span>
+
+    <span class="cm">/* 97 - 96 = 0x61 - 0x60 = 1 */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mh">0x60</span><span class="p">);</span>
+
+    <span class="cm">/* So this is the same as &quot;fun&quot; + 1, printing &quot;un&quot; */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;fun&quot;</span> <span class="o">+</span> <span class="p">((</span><span class="mi">1</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mh">0x60</span><span class="p">));</span>
+
+    <span class="cm">/* Rearrange and use unix variable instead of 1 */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">unix</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]</span><span class="o">+</span><span class="s">&quot;fun&quot;</span><span class="o">-</span><span class="mh">0x60</span><span class="p">);</span>
+
+    <span class="cm">/* ...thus we have the first argument in the printf call. */</span>
+
+    <span class="cm">/* Both these print the string &quot;bcde&quot;, ignoring the &#39;a&#39; */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;abcde&quot;</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="s">&quot;abcde&quot;</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="cm">/* so does this */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="s">&quot;abcde&quot;</span><span class="p">]);</span>
+
+    <span class="cm">/* and so does this (NB [] binds closer than &amp;) */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">unix</span><span class="p">[</span><span class="s">&quot;abcde&quot;</span><span class="p">]);</span>
+
+    <span class="cm">/* This prints &quot;%six&quot; + newline */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="s">&quot;?%six</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="cm">/* So does this: note that</span>
+<span class="cm">       \012 = 0x0a = \n,</span>
+<span class="cm">       the first \021 char is ignored,</span>
+<span class="cm">       and the \0 is superfluous, probably just for symmetry */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="s">&quot;</span><span class="se">\021</span><span class="s">%six</span><span class="se">\012\0</span><span class="s">&quot;</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="cm">/* and so does this */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">unix</span><span class="p">[</span><span class="s">&quot;</span><span class="se">\021</span><span class="s">%six</span><span class="se">\012\0</span><span class="s">&quot;</span><span class="p">]);</span>
+
+    <span class="cm">/* Using this as a format string, we can print &quot;ABix&quot; */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">unix</span><span class="p">[</span><span class="s">&quot;</span><span class="se">\021</span><span class="s">%six</span><span class="se">\012\0</span><span class="s">&quot;</span><span class="p">],</span> <span class="s">&quot;AB&quot;</span><span class="p">);</span>
+
+    <span class="cm">/* just like this does */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%six</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;AB&quot;</span><span class="p">);</span>
+
+    <span class="cm">/* So, we can print &quot;unix&quot; like this */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%six</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">unix</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]</span><span class="o">+</span><span class="s">&quot;fun&quot;</span><span class="o">-</span><span class="mh">0x60</span><span class="p">);</span>
+
+    <span class="cm">/* or, finally, like this */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">unix</span><span class="p">[</span><span class="s">&quot;</span><span class="se">\021</span><span class="s">%six</span><span class="se">\012\0</span><span class="s">&quot;</span><span class="p">],(</span><span class="n">unix</span><span class="p">)[</span><span class="s">&quot;have&quot;</span><span class="p">]</span><span class="o">+</span><span class="s">&quot;fun&quot;</span><span class="o">-</span><span class="mh">0x60</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+  <div class="social">
+    <!--
+	<a href="//www.reddit.com/submit?url=http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987/" target="_blank">
+      <i class="fa fa-lg fa-reddit-square"></i>
+    </a>
+
+    <a href="//news.ycombinator.com/submitlink?u=http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987/&amp;t=Annonated IOCCC best one-liner winner program" target="_blank">
+      <i class="fa fa-lg fa-hacker-news"></i>
+    </a>
+
+    <a href="http://twitter.com/share?url=http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987&amp;text=%22Annonated IOCCC best one-liner winner program%22%20%40munificentbob" target="_blank">
+      <i class="fa fa-lg fa-twitter-square"></i>
+    </a>
+
+    <a href="http://www.facebook.com/share.php?u=http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987" target="_blank">
+      <i class="fa fa-lg fa-facebook-square"></i>
+    </a>
+
+    <a href="https://plus.google.com/share?url=http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987" target="_blank">
+      <i class="fa fa-lg fa-google-plus-square"></i>
+    </a>
+
+    <a href="/rss.xml">
+      <i class="fa fa-lg fa-rss-square"></i>
+    </a>
+	-->
+  </div>
+
+  
+  <div class="comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'william-cheung-etw';
+        /*var disqus_url = "http://journal.stuffwithstuff.com/2016/05/03/ioccc-best-one-liner-1987";*/
+
+        (function() {
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+  
+</article>
+
+
+      <nav>
+  <div class="nav-first">
+    <a href="/"><img src="/image/dorm_shot.jpg" class="william"></a>
+
+    <p>Hi! I'm <strong>William Cheung</strong>, a code maker.</p> 
+	<p><a href="/cv.html">Here</a> is my resume.</p>
+    <p>You can email me at <code>escape.the.well@gmail.com</code></p>
+
+    <h2>Elsewhere</h2>
+    <ul>
+      <li>Code at <a href="http://github.com/william-cheung">github</a></li>
+      <li>Posts at <a href="http://www.cnblogs.com/william-cheung">cnblogs</a></li>
+    </ul>
+  </div>
+  <div class="nav-second">
+    <h2>Categories</h2>
+    <ul><li><a href="/category/algorithms">algorithms</a> <small class='post-count'>2</small></li><li><a href="/category/c">c</a> <small class='post-count'>2</small></li><li><a href="/category/code">code</a> <small class='post-count'>2</small></li><li><a href="/category/cpp">cpp</a> <small class='post-count'>2</small></li><li><a href="/category/oop">oop</a> <small class='post-count'>1</small></li></ul>
+
+    <p class="archive">All <a href="/archive">6 articles</a>&hellip;</p>
+
+    <p>This blog is built using <a href="http://jekyllrb.com/">jekyll</a>. The source repo for it is <a href="https://github.com/william-cheung/william-cheung.github.io">here</a>.</p>
+    <p class="copyright">&copy; 2016 William Cheung</p>
+  </div>
+</nav>
+
+    </div>
+  </body>
+</html>

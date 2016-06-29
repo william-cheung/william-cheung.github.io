@@ -2,6 +2,13 @@ permalink: /:year/:month/:day/:title
 highlighter: pygments
 markdown: redcarpet
 
+gems: [
+  jekyll-paginate,
+  redcarpet,
+  jekyll-gist,
+  pygments.rb
+]
+
 exclude: [
   TODO,
   README.md,
@@ -26,8 +33,10 @@ category_names:
   "cpp": "C++"
   "distributed-systems": "Distributed Systems"
   "go": "Go"
+  "java": "Java"
   "language": "Programming Languages"
   "oop": "OOP"
   "os": "O/S Design"
   "python": "Python"
+  "system": "System Design"
   "unix": "Unix/Linux"

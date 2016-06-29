@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro|PT+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+
+    <!-- Tell mobile browsers we're optimized for them and they don't need to
+         crop the viewport. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="/rss.xml" />
+    <link rel="alternate" type="application/atom+xml" title="Atom 1.0" href="/atom.xml" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <title>
+      offsetof 和 container_of
+      
+        &ndash; william-cheung.github.io
+      
+    </title>
+  </head>
+  <body>
+    <div class="column">
+      
+<article>
+<header>
+<h1>
+  <a href="/2015/08/19/offsetof-and-container_of" rel="bookmark"
+     title="Permanent Link to offsetof 和 container_of">
+    offsetof 和 container_of
+  </a>
+</h1>
+
+  <a class="older" href="/2014/05/29/longest-increasing-subsequence"
+     title="Older Post &ldquo;Longest Increasing Subsequence Review&rdquo;">&#8617;</a>
+
+
+  <a class="newer" href="/2015/08/28/prototype-design-pattern"
+     title="Newer Post &ldquo;Prototype 模式&rdquo;">&#8618;</a>
+
+</header>
+<h4><a href="/archive">August 19, 2015</a>
+    <span class="tags"><a href="/category/c">c</a> <a href="/category/code">code</a></span>
+</h4>
+
+<p>offsetof 和 container_of 是两个常见的与结构或类相关的宏， 其定义有一定的技巧性，这里总结一下. </p>
+
+<h2>1. offsetof</h2>
+
+<p>offsetof 是定义在头文件 stddef.h (cstddef in C++) 中的一个宏， 用于计算结构体(struct)或联合体(union) 成员的地址偏移.</p>
+
+<p>一种常见的存在移植问题的实现(GCC 标准库实现):</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#define offsetof(type, member) ((size_t)(&amp;((type *)0)-&gt;member))</span>
+</code></pre></div>
+<p>这一实现的原理是如果一个对象的地址为0的话，那么它的数据成员的地址就是数据成员在该对象的内存布局中相对于对象地址的偏移值. 虽然这一实现在许多编译器上可以通过编译，但更据 C 标准或 C++ 标准，对 NULL 指针解引用 (dereference) 属于未定义行为. 一些编译器会对这个宏定义给出警告. 我的 gcc 4.8.3 就给出如下警告：</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="n">invalid</span> <span class="n">access</span> <span class="n">to</span> <span class="n">non</span><span class="o">-</span><span class="k">static</span> <span class="n">data</span> <span class="n">member</span> <span class="p">...</span> <span class="n">of</span> <span class="nb">NULL</span> <span class="n">object</span>
+<span class="p">(</span><span class="n">perhaps</span> <span class="n">the</span> <span class="err">`</span><span class="n">offsetof</span><span class="err">&#39;</span> <span class="n">macro</span> <span class="n">was</span> <span class="n">used</span> <span class="n">incorrectly</span><span class="p">)</span>
+</code></pre></div>
+<p>一种可行的消除警告的方法是利用 1 作为对象地址， 而不是 0. 宏定义如下:</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#define offsetof(type, member) ((size_t)((char*)(&amp;((type*)1)-&gt;member) - 1))</span>
+</code></pre></div>
+<p>一些现代编译器内建offsetof功能， 在定义 offsetof 时使用如下形式:</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#define offsetof(type, member) __builtin_offsetof(type, member)</span>
+</code></pre></div>
+<p>在 C 中 offsetof 可应用于 struct 或 union.
+在 C++ 中， 可以将 offsetof 应用于 class， 但是标准对其给出了一些限制, 可参考：<br>
+<a href="http://en.cppreference.com/w/cpp/types/offsetof">http://en.cppreference.com/w/cpp/types/offsetof</a><br>
+<a href="http://en.cppreference.com/w/cpp/language/data_members#Standard_layout">http://en.cppreference.com/w/cpp/language/data<em>members#Standard</em>layout</a></p>
+
+<p>下面是一段 C++ 示例代码：</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#include &lt;iostream&gt;</span>
+<span class="cp">#include &lt;cstddef&gt;</span>
+<span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="c1">//#define offsetof(type, member) ((size_t)((char*)(&amp;((type*)1)-&gt;member) - 1))</span>
+
+<span class="k">struct</span> <span class="n">Base</span> <span class="p">{</span>
+    <span class="kt">int</span>     <span class="n">_m1</span><span class="p">;</span>
+    <span class="kt">double</span>  <span class="n">_m2</span><span class="p">;</span>
+<span class="nl">private</span><span class="p">:</span>
+    <span class="kt">char</span>    <span class="n">_m3</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="nl">Derived</span> <span class="p">:</span> <span class="n">public</span> <span class="n">Base</span> <span class="p">{</span>
+    <span class="kt">int</span>     <span class="n">_m4</span><span class="p">;</span>
+    <span class="n">virtual</span> <span class="kt">void</span> <span class="nf">vfunc</span><span class="p">()</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// we are using standard offsetof</span>
+    <span class="c1">// the behaviors below is undefined because Base and Derived are not</span>
+    <span class="c1">// standard layout types according to the C++ standard</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span> <span class="n">_m1</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> 
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span> <span class="n">_m2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="c1">// cout &lt;&lt; offsetof(Base, _m3) &lt;&lt; endl;</span>
+    <span class="c1">// error : char Base::_m3 is private</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">Derived</span><span class="p">,</span> <span class="n">_m2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">Derived</span><span class="p">,</span> <span class="n">_m4</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>利用 g++ 编译时， 可使用 -Winvalid-offsetof 选项来关闭“访问 NULL 对象的非静态成员”等警告. 在 64 位机器上
+编译执行， 输出为：</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh">0
+8
+16
+28
+</code></pre></div>
+<h2>2. container_of</h2>
+
+<p>container_of 的定义见于 Linux 内核源码（C语言）kernel.h  它的功能是利用成员(或字段)的地址计算出包含它的结构对象的地址.</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#define container_of(ptr, type, member) ({ \</span>
+<span class="cp">                const typeof( ((type *)0)-&gt;member ) *__mptr = (ptr); \</span>
+<span class="cp">                (type *)( (char *)__mptr - offsetof(type,member) );})</span>
+</code></pre></div>
+<p>首先将 ptr 赋值给 __mptr, 不太清楚这里为什么要声明__mptr 而不是利用 ptr 直接运算. typeof 是 GNU C 扩展，用于获取变量的类型。__mptr 的值减去地址偏移就是对象的地址.</p>
+
+<p>下面是 container_of 的使用示例:</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">my_struct</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">list_node</span> <span class="n">list</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">extern</span> <span class="k">struct</span> <span class="n">list_node</span> <span class="o">*</span> <span class="nf">list_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">list_node</span> <span class="o">*</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="n">list_node</span> <span class="o">*</span><span class="n">current</span> <span class="o">=</span> <span class="cm">/* ... */</span>
+<span class="k">while</span><span class="p">(</span><span class="n">current</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">){</span>
+    <span class="k">struct</span> <span class="n">my_struct</span> <span class="o">*</span><span class="n">element</span> <span class="o">=</span> <span class="n">container_of</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="k">struct</span> <span class="n">my_struct</span><span class="p">,</span> <span class="n">list</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">list_next</span><span class="p">(</span><span class="o">&amp;</span><span class="n">element</span><span class="o">-&gt;</span><span class="n">list</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+  <div class="social">
+    <!--
+	<a href="//www.reddit.com/submit?url=http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of/" target="_blank">
+      <i class="fa fa-lg fa-reddit-square"></i>
+    </a>
+
+    <a href="//news.ycombinator.com/submitlink?u=http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of/&amp;t=offsetof 和 container_of" target="_blank">
+      <i class="fa fa-lg fa-hacker-news"></i>
+    </a>
+
+    <a href="http://twitter.com/share?url=http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of&amp;text=%22offsetof 和 container_of%22%20%40munificentbob" target="_blank">
+      <i class="fa fa-lg fa-twitter-square"></i>
+    </a>
+
+    <a href="http://www.facebook.com/share.php?u=http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of" target="_blank">
+      <i class="fa fa-lg fa-facebook-square"></i>
+    </a>
+
+    <a href="https://plus.google.com/share?url=http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of" target="_blank">
+      <i class="fa fa-lg fa-google-plus-square"></i>
+    </a>
+
+    <a href="/rss.xml">
+      <i class="fa fa-lg fa-rss-square"></i>
+    </a>
+	-->
+  </div>
+
+  
+  <div class="comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'william-cheung-etw';
+        /*var disqus_url = "http://journal.stuffwithstuff.com/2015/08/19/offsetof-and-container_of";*/
+
+        (function() {
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+  
+</article>
+
+
+      <nav>
+  <div class="nav-first">
+    <a href="/"><img src="/image/dorm_shot.jpg" class="william"></a>
+
+    <p>Hi! I'm <strong>William Cheung</strong>, a code maker.</p> 
+	<p><a href="/cv.html">Here</a> is my resume.</p>
+    <p>You can email me at <code>escape.the.well@gmail.com</code></p>
+
+    <h2>Elsewhere</h2>
+    <ul>
+      <li>Code at <a href="http://github.com/william-cheung">github</a></li>
+      <li>Posts at <a href="http://www.cnblogs.com/william-cheung">cnblogs</a></li>
+    </ul>
+  </div>
+  <div class="nav-second">
+    <h2>Categories</h2>
+    <ul><li><a href="/category/algorithms">algorithms</a> <small class='post-count'>2</small></li><li><a href="/category/c">c</a> <small class='post-count'>2</small></li><li><a href="/category/code">code</a> <small class='post-count'>2</small></li><li><a href="/category/cpp">cpp</a> <small class='post-count'>2</small></li><li><a href="/category/oop">oop</a> <small class='post-count'>1</small></li></ul>
+
+    <p class="archive">All <a href="/archive">6 articles</a>&hellip;</p>
+
+    <p>This blog is built using <a href="http://jekyllrb.com/">jekyll</a>. The source repo for it is <a href="https://github.com/william-cheung/william-cheung.github.io">here</a>.</p>
+    <p class="copyright">&copy; 2016 William Cheung</p>
+  </div>
+</nav>
+
+    </div>
+  </body>
+</html>
